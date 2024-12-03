@@ -1,0 +1,147 @@
+import tkinter as tk
+from tkinter import messagebox
+import pickle
+
+# Create the main application window
+root = tk.Tk()
+root.title("Own Helper")
+root.geometry("400x500")
+root.configure(bg="light gray")
+
+# Add title label
+title_label = tk.Label(root, text="The Best Way To Predict Your Future Is To Create It.-Abraham Lincoln ", font=("Arial", 18, "bold"), bg="lightgrey")
+title_label.pack(pady=20)
+
+def add_task():
+    task = task_entry.get()
+    if task != "":
+        tasks_listbox.insert(tk.END, task)
+        task_entry.delete(0, tk.END)
+    else:
+        messagebox.showwarning("Warning", "You must enter a task.")
+
+def delete_task():
+    try:
+        selected_task_index = tasks_listbox.curselection()[0]
+        tasks_listbox.delete(selected_task_index)
+    except IndexError:
+        messagebox.showwarning("Warning", "You must select a task to delete.")
+
+def save_tasks():
+    tasks = tasks_listbox.get(0, tasks_listbox.size())  # Get all tasks from the listbox
+    with open("tasks.pkl", "wb") as f:  # Save tasks to a file using pickle
+        pickle.dump(tasks, f)
+    messagebox.showinfo("Info", "Tasks saved successfully.")
+
+def load_tasks():
+    try:
+        with open("tasks.pkl", "rb") as f:  # Load tasks from the saved file
+            tasks = pickle.load(f)
+        for task in tasks:
+            tasks_listbox.insert(tk.END, task)  # Insert each task into the listbox
+    except FileNotFoundError:
+        pass
+
+# Task entry box with border
+task_entry = tk.Entry(root, width=35, font=("Arial", 12), bd=3, relief="solid", highlightthickness=1, highlightbackground="black")
+task_entry.pack(pady=15)
+
+# Task listbox with border
+tasks_listbox = tk.Listbox(root, width=50, height=10, font=("Arial", 12), bd=3, relief="solid", highlightthickness=1, highlightbackground="black")
+tasks_listbox.pack(pady=10)
+
+# Function to create rounded button style
+def create_button(parent, text, color, command):
+    button = tk.Button(parent, text=text, width=15, height=2, font=("Arial", 12), 
+                       bg=color, fg="white", relief="flat", bd=5, 
+                       highlightthickness=0, command=command)
+    button.pack(pady=5)
+    return button
+
+# Frame for buttons
+button_frame = tk.Frame(root, bg="lightgray")
+button_frame.pack(pady=10)
+
+# Create rounded buttons
+create_button(button_frame, "Add Task", "#000000", add_task)
+create_button(button_frame, "Delete Task", "#000000", delete_task)
+create_button(button_frame, "Save Tasks", "#000000", save_tasks)
+create_button(button_frame, "Load Tasks", "#000000", load_tasks)
+
+# New button to open "Time Table" window
+def open_time_table_window():
+    # Create a new top-level window for Time Table
+    time_table_window = tk.Toplevel(root)
+    time_table_window.title("Time Table")  # Set the title of the new window to "Time Table"
+    time_table_window.geometry("500x400")  # Set size of the new window
+    
+    # Add title label for Time Table
+    label = tk.Label(time_table_window, text="Create Your Time Table", font=("Arial", 14, "bold"))
+    label.pack(pady=10)
+
+    # Create a list of time slots
+    time_slots = ["12:00 AM - 5:00 AM", "5:00 AM - 7:00 AM", "7:00 AM - 10:00 AM",
+                  "10:00 AM - 2:00 PM", "2:00 PM - 4:00 PM", "4:00 PM - 6:00 PM",
+                  "6:00 PM - 9:00 PM", "9:00 PM - 12:00 AM"]
+    
+    # Dictionary to hold entry widgets for time slots
+    time_entries = {}
+
+    # Create entry fields for each time slot
+    for time_slot in time_slots:
+        time_label = tk.Label(time_table_window, text=time_slot, font=("Arial", 12))
+        time_label.pack(pady=5)
+        
+        time_entry = tk.Entry(time_table_window, width=35, font=("Arial", 12), bd=3, relief="solid")
+        time_entry.pack(pady=5)
+        
+        # Save the entry widget in the dictionary with time slot as the key
+        time_entries[time_slot] = time_entry
+
+    # Load the saved time table if exists
+    def load_time_table():
+        try:
+            with open("time_table.pkl", "rb") as f:
+                saved_time_table = pickle.load(f)
+            for time_slot, task in saved_time_table.items():
+                if time_slot in time_entries:
+                    time_entries[time_slot].insert(0, task)  # Insert the saved task into the entry
+        except FileNotFoundError:
+            pass  # No file to load
+
+    # Function to save the time table
+    def save_time_table():
+        time_table = {}
+        for time_slot, entry in time_entries.items():
+            time_table[time_slot] = entry.get()  # Get the value from each entry field
+        
+        # Save the time table to a file
+        with open("time_table.pkl", "wb") as f:
+            pickle.dump(time_table, f)
+        
+        messagebox.showinfo("Time Table Saved", "Your time table has been saved successfully!")
+
+    # Function to delete (clear) time table entries
+    def delete_time_table():
+        for entry in time_entries.values():
+            entry.delete(0, tk.END)  # Clear the content of each entry
+
+    # Save button
+    save_button = tk.Button(time_table_window, text="Save Time Table",command=save_time_table, font=("Georgia", 12))
+    save_button.pack(pady=10)
+
+    # Delete button to clear all time table entries
+    delete_button = tk.Button(time_table_window, text="Delete Time Table", command=delete_time_table, font=("Georgia", 12))
+    delete_button.pack(pady=10)
+
+    # Load saved time table data
+    load_time_table()
+
+# Create the "Time Table" button with updated text
+create_button(button_frame, "Time Table", "#000000", open_time_table_window)
+
+# Load tasks on startup
+load_tasks()
+
+# Start the main event loop
+root.mainloop()
